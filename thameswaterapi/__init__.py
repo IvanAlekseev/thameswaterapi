@@ -929,6 +929,8 @@ class ThamesWater:
         """
         if self._refresh_token is None:
             return None
+        _logger.debug("TEST BUILD: skipping the refresh-token step")
+        return None
         try:
             return self._refresh_token_grant(parse=_parse_id_token_response).id_token
         except MalformedResponse as err:
@@ -966,10 +968,17 @@ class ThamesWater:
         location = r.headers.get("Location", "")
         fragment_params = parse_qs(urlparse(location).fragment)
         if "code" in fragment_params:
+            held = self._refresh_token
             tokens = self._get_oauth2_code_b2c_1_tw_website_signin(
                 fragment_params["code"][0]
             )
             assert tokens.id_token is not None  # _parse_id_token_response guarantees it
+            _logger.debug(
+                "TEST BUILD: silent exchange returned a refresh token: %s, "
+                "held one replaced: %s",
+                tokens.refresh_token is not None,
+                self._refresh_token != held,
+            )
             return tokens.id_token
         if "error" in fragment_params:
             _logger.debug(
